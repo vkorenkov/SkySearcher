@@ -70,5 +70,19 @@ namespace SkySearcher.Model
 
             return tempData;
         }
+
+        //private bool ValidateExcel(IXLWorksheet worksheet)
+        //{
+        //    if (worksheet.ColumnCount() > 3 && worksheet.ColumnCount() < 3)
+        //    {
+        //        MessageBox.Show("Количество колонок файла не соответствует 3.");
+
+        //        return false;
+        //    }
+        //    else
+        //    {
+        //        return true;
+        //    }
+        //}
     }
 }

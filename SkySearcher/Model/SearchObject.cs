@@ -13,6 +13,11 @@ namespace SkySearcher.Model
 {
     class SearchObject
     {
+        int i = 0;
+
+        public delegate void ProgressBarDelegate(int count);
+        public event ProgressBarDelegate ProgressBarCountEvent;
+
         /// <summary>
         /// Метод поиска ПК в AD
         /// </summary>
@@ -86,7 +91,7 @@ namespace SkySearcher.Model
                 }
             }
 
-            if(!string.IsNullOrEmpty(msg)) 
+            if (!string.IsNullOrEmpty(msg))
                 Task.Run(() => MessageBox.Show($"{msg} не найдены"));
 
             entry.Close();
@@ -95,26 +100,64 @@ namespace SkySearcher.Model
         }
 
         /// <summary>
-        /// Медо получения даных из AD
+        /// Медо записи даных в AD
         /// </summary>
         /// <param name="attributes"></param>
         /// <param name="entries"></param>
-        public void InputSomePcInv(ObservableCollection<AttributeValueObject> attributes, List<DirectoryEntry> entries)
+        public async Task InputSomePcInv(ObservableCollection<AttributeValueObject> attributes, List<DirectoryEntry> entries)
         {
             foreach (var t in attributes)
             {
+                DirectoryEntry temp = new DirectoryEntry();
+
                 // Выбор каждого отдельного ПК
-                var temp = entries.Where(t.AttributePcValue);
+                await Task.Run(() => temp = entries.Where(x => x.Name.Contains(t.AttributePcValue)).FirstOrDefault());
+
+                string tempSelectedDepInv = t.SelectDepInv;
 
                 if (temp != null)
                 {
-                   InputInv(temp, t.SelectDepInv + t.InputInv);
-                }
-                else
-                {
-                    MessageBox.Show("Пусто");
+                    tempSelectedDepInv = CheckSelectedDep(tempSelectedDepInv);
+
+                    try
+                    {
+                        if (string.IsNullOrEmpty(tempSelectedDepInv))
+                            throw new NullException("Не выбрана система учета");
+                        else if (string.IsNullOrEmpty(t.InputInv))
+                            throw new NullException("Не заполнен инвентерный номер");
+                        else
+                            await InputInv(temp, tempSelectedDepInv + t.InputInv);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception(e.Message);
+                    }
                 }
             }
+        }
+
+        private string CheckSelectedDep(string tempSelectedDepInv)
+        {
+            switch (tempSelectedDepInv.ToLower())
+            {
+                case "дл транс (600)":
+                    tempSelectedDepInv = "ДТ";
+                    break;
+                case "колл центр (296cc)":
+                    tempSelectedDepInv = "КЦ";
+                    break;
+                case "колл центр (296)":
+                    tempSelectedDepInv = "296";
+                    break;
+                case "грузоперевозки (296)":
+                    tempSelectedDepInv = "296";
+                    break;
+                default:
+                    tempSelectedDepInv = null;
+                    break;
+            }
+
+            return tempSelectedDepInv;
         }
 
         /// <summary>
@@ -122,18 +165,20 @@ namespace SkySearcher.Model
         /// </summary>
         /// <param name="entry"></param>
         /// <param name="input"></param>
-        public void InputInv(DirectoryEntry entry, string input)
+        public async Task InputInv(DirectoryEntry entry, string input)
         {
             try
             {
                 // Присваивание значения определенному атрибуту в AD
                 entry.Properties["extensionAttribute7"].Value = $"{input}";
                 // Сохранение данных в AD
-                entry.CommitChanges();
+                await Task.Run(() => entry.CommitChanges());
+
+                ProgressBarCountEvent?.Invoke(i += 1);
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message);
+                throw new Exception(e.Message);
             }
         }
 
@@ -165,8 +210,22 @@ namespace SkySearcher.Model
             attribute.AttributeDescName = entrie.Properties["extensionAttribute7"].PropertyName;
             attribute.SelectDepInv = depNum;
             attribute.InputInv = invNum;
-            
+
             return attribute;
         }
+
+        //public string ValidatePcName(string pcNames)
+        //{
+        //    Regex regex = new Regex(@"^[a-zA-Z]{3,10}-[0-9]{3,4}");
+
+        //    string msg = string.Empty;
+
+        //    if(!regex.IsMatch(pcNames))
+        //    {
+        //        msg = msg + $"{pcNames} ";
+        //    }
+
+        //    return msg;
+        //}
     }
 }

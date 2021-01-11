@@ -47,7 +47,7 @@ namespace SkySearcher.Model
         /// <summary>
         /// коллекция подразделений
         /// </summary>
-        public List<string> DepInvs { get; set; } = new List<string> { "296", "ДТ", "КЦ"};
+        public List<string> DepInvs { get; } = new List<string> { "Грузоперевозки (296)", "ДЛ Транс (600)", "Колл центр (296CC)", "Колл центр (296)" };
 
         private string inputInv;
         /// <summary>

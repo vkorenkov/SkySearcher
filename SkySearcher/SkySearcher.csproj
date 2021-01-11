@@ -79,17 +79,32 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="DontForget.cs" />
+    <Compile Include="EggWindow.xaml.cs">
+      <DependentUpon>EggWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ExampleExcel.xaml.cs">
+      <DependentUpon>ExampleExcel.xaml</DependentUpon>
+    </Compile>
     <Compile Include="HelpedClasses\CommandClass.cs" />
     <Compile Include="Model\AttributeValueObject.cs" />
     <Compile Include="Model\EncryptClass.cs" />
     <Compile Include="Model\ExcelData.cs" />
     <Compile Include="Model\ExcelWork.cs" />
     <Compile Include="Model\Extentions.cs" />
+    <Compile Include="Model\NullException.cs" />
     <Compile Include="Model\SaveOpen.cs" />
     <Compile Include="Model\SearchObject.cs" />
     <Compile Include="HelpedClasses\NameConverter.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="HelpedClasses\PropChanged.cs" />
+    <Page Include="EggWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ExampleExcel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -141,6 +156,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\ExampleXl.PNG">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Excel.ico">

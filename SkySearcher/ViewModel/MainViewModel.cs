@@ -132,17 +132,18 @@ namespace SkySearcher.ViewModel
             // Проверка на пустое значение выбранного ПК
             if (SelectedPC != null)
             {
-                SelectedPC.SelectDepInv = " "; //
-                                               // Установка пустых значений для удаления инв.номера
-                SelectedPC.InputInv = " ";     //
-
+                #region _
+                //SelectedPC.SelectDepInv = " "; //
+                //                               // Установка пустых значений для удаления инв.номера
+                //SelectedPC.InputInv = " ";     //
+                #endregion
                 // Выбор свойств ПК из AD
-                var pcEntry = entrys.Where(SelectedPC.AttributePcValue);
+                var pcEntry = entrys.Where(x => x.Name.Contains(SelectedPC.AttributePcValue)).FirstOrDefault();
 
                 // Условие подтверждение удаления инв.номера
                 if (MessageBox.Show($@"Удалить инв.номер ""{SelectedPC.AttributeDescValue}"" у компьютера {SelectedPC.AttributePcValue}?", "Удаление", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    search.InputInv(pcEntry, " ");
+                    await search.InputInv(pcEntry, " ");
 
                     await GetEntries(obj);
                 }
@@ -160,16 +161,36 @@ namespace SkySearcher.ViewModel
         {
             SearchObject search = new SearchObject();
 
-            await Task.Run(() => search.InputSomePcInv(GetingProp, entrys));
+            search.ProgressBarCountEvent += Search_ProgressBarCountEvent;
+
+            ValueProgBar = 0;
+
+            MaxProgBar = GetingProp.Count;
+
+            try
+            {
+                await search.InputSomePcInv(GetingProp, entrys);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
 
             await GetEntries(obj);
         });
+
+        private void Search_ProgressBarCountEvent(int count)
+        {
+            ValueProgBar = count;
+        }
 
         /// <summary>
         /// Команда выбора файла
         /// </summary>
         public ICommand OpenFile => new CommandClass<object>(async obj =>
         {
+            SearchPcName = string.Empty;
+
             // Получение пути к файлу Excel
             Path = saveOpen.OpenFile();
 
@@ -181,7 +202,7 @@ namespace SkySearcher.ViewModel
                 // Временная коллекция объектов ПК
                 var tempList = new List<AttributeValueObject>();
 
-                var task = new Task(() =>
+                await Task.Run(() =>
                 {
                     Indeterminate = true;
 
@@ -204,11 +225,9 @@ namespace SkySearcher.ViewModel
                     }
                 });
 
-                task.Start();
-
-                await Task.Run(() => Task.WaitAll(task));
-
                 GetingProp = new ObservableCollection<AttributeValueObject>(tempList);
+
+                GetPcNamesFromExcel();
             }
         });
 
@@ -237,6 +256,14 @@ namespace SkySearcher.ViewModel
         });
 
         /// <summary>
+        /// Команда открытия окна с примером файла Excel
+        /// </summary>
+        public ICommand OpenExample => new CommandClass<object>(obj =>
+            {
+                new ExampleExcel().ShowDialog();
+            });
+
+        /// <summary>
         /// Конструктор
         /// </summary>
         public MainViewModel()
@@ -262,13 +289,13 @@ namespace SkySearcher.ViewModel
             // Временная коллекция свойств ПК
             var tempList = new List<AttributeValueObject>();
 
-            var task = new Task(() =>
+            await Task.Run(() =>
             {
                 // Проверка мастер-режима
                 if (!ActiveMaster && temp.Count > 1)
                 {
                     temp = new List<string> { temp[0] };
-                    MessageBox.Show("Мастер режим отключен. Будет показан результат только по первому введенному имени ПК");
+                    MessageBox.Show("Мастер режим отключен.\n\nБудет показан результат только по первому введенному имени ПК");
                 }
 
                 entrys = search.SearchPc(temp);
@@ -286,11 +313,22 @@ namespace SkySearcher.ViewModel
                 }
             });
 
-            task.Start();
-
-            await Task.Run(() => Task.WaitAll(task));
-
             GetingProp = new ObservableCollection<AttributeValueObject>(tempList);
+        }
+
+        private void GetPcNamesFromExcel()
+        {
+            foreach (var n in GetingProp)
+            {
+                if (n != GetingProp.Last())
+                {
+                    SearchPcName = SearchPcName + n.AttributePcValue + ';';
+                }
+                else
+                {
+                    SearchPcName = SearchPcName + n.AttributePcValue;
+                }
+            }
         }
     }
 }
